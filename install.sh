@@ -81,7 +81,6 @@ detect_platform() {
         *)              die "Unsupported architecture: $ARCH" ;;
     esac
 
-
     PLATFORM="${OS}-${ARCH}"
 }
 
@@ -219,6 +218,35 @@ download_binary() {
     mv "${TMP_DIR}/${BINARY_FILE}" "${PREFIX}/${BINARY_NAME}"
 }
 
+# --- Skill install ---
+
+install_skill() {
+    # First -y is for npx (auto-accept package install).
+    # --yes --global --all pass through to the `skills` CLI itself: skip every
+    # confirmation, install to the user-level agent dir, and target every
+    # detected agent. </dev/null forces the prompt library to give up
+    # immediately on its TTY check instead of hanging when stdin is the
+    # curl-piped installer.
+    SKILL_CMD="npx -y skills add getsesame/skills --yes --global --all"
+    SKILL_MANUAL="npx skills add getsesame/skills"
+
+    if ! command -v npx >/dev/null 2>&1; then
+        info "${BOLD}Install Sesame skill${RESET} (requires Node.js)"
+        info "  ${CYAN}${SKILL_MANUAL}${RESET}"
+        info ""
+        return
+    fi
+
+    info "${BOLD}Installing Sesame skill...${RESET}"
+    if $SKILL_CMD </dev/null; then
+        ok "Sesame skill installed"
+    else
+        warn "Skill install failed. Run manually:"
+        info "  ${CYAN}${SKILL_MANUAL}${RESET}"
+    fi
+    info ""
+}
+
 # --- Existing install detection ---
 
 check_existing() {
@@ -256,6 +284,9 @@ main() {
     info ""
     ok "secretctl installed successfully!"
     info ""
+
+    install_skill
+
     info "Get started:"
     info "  ${CYAN}secretctl login${RESET}       Register this device"
     info "  ${CYAN}secretctl status${RESET}      Check agent status"
