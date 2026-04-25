@@ -1,10 +1,10 @@
 #!/bin/sh
-# Sesame secretctl installer
+# Sesame sesame installer
 # Usage: curl -fsSL https://getsesame.dev/install.sh | sh
 set -eu
 
-REPO="getsesame/secretctl"
-BINARY_NAME="secretctl"
+REPO="getsesame/sesame"
+BINARY_NAME="sesame"
 DEFAULT_PREFIX="/usr/local/bin"
 
 # --- Output helpers ---
@@ -48,7 +48,7 @@ done
 
 if [ "$HELP" = 1 ]; then
     cat <<'USAGE'
-Sesame secretctl installer
+Sesame sesame installer
 
 Usage:
     curl -fsSL https://getsesame.dev/install.sh | sh
@@ -57,7 +57,7 @@ Usage:
 Options:
     --version <ver>    Install a specific version (e.g., v0.1.0)
     --prefix <dir>     Install location (default: /usr/local/bin)
-    --uninstall        Remove secretctl
+    --uninstall        Remove sesame
     --help             Show this message
 USAGE
     exit 0
@@ -168,12 +168,12 @@ do_uninstall() {
     info ""
 
     if [ ! -f "$TARGET" ]; then
-        warn "secretctl is not installed at ${TARGET}"
+        warn "sesame is not installed at ${TARGET}"
         exit 0
     fi
 
     rm -f "$TARGET"
-    ok "secretctl removed from ${TARGET}"
+    ok "sesame removed from ${TARGET}"
     exit 0
 }
 
@@ -187,7 +187,7 @@ download_binary() {
 
     trap 'rm -rf "$TMP_DIR"' EXIT
 
-    printf "  Downloading secretctl %b%s%b... " "$BOLD" "$VERSION" "$RESET"
+    printf "  Downloading sesame %b%s%b... " "$BOLD" "$VERSION" "$RESET"
     if ! curl -fsSL -o "${TMP_DIR}/${BINARY_FILE}" "$DOWNLOAD_URL"; then
         printf "\n"
         die "Download failed. Check that version ${VERSION} exists at:"
@@ -282,15 +282,15 @@ main() {
     download_binary
 
     info ""
-    ok "secretctl installed successfully!"
+    ok "sesame installed successfully!"
     info ""
 
     install_skill
 
     info "Get started:"
-    info "  ${CYAN}secretctl login${RESET}       Register this device"
-    info "  ${CYAN}secretctl status${RESET}      Check agent status"
-    info "  ${CYAN}secretctl --help${RESET}      See all commands"
+    info "  ${CYAN}sesame login${RESET}       Register this device"
+    info "  ${CYAN}sesame status${RESET}      Check agent status"
+    info "  ${CYAN}sesame --help${RESET}      See all commands"
     info ""
     info "Docs: ${CYAN}https://getsesame.dev/docs${RESET}"
     printf "\n"
