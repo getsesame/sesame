@@ -162,17 +162,19 @@ check_path() {
 do_uninstall() {
     resolve_prefix
     TARGET="${PREFIX}/${BINARY_NAME}"
+    LIBDIR="$(dirname "$PREFIX")/lib/sesame"
 
     printf "\n"
     info "${BOLD}sesame${RESET} - secret broker CLI"
     info ""
 
-    if [ ! -f "$TARGET" ]; then
+    if [ ! -e "$TARGET" ] && [ ! -L "$TARGET" ] && [ ! -d "$LIBDIR" ]; then
         warn "sesame is not installed at ${TARGET}"
         exit 0
     fi
 
     rm -f "$TARGET"
+    rm -rf "$LIBDIR"
     ok "sesame removed from ${TARGET}"
     exit 0
 }
@@ -180,15 +182,15 @@ do_uninstall() {
 # --- Download and verify ---
 
 download_binary() {
-    BINARY_FILE="${BINARY_NAME}-${PLATFORM}"
-    DOWNLOAD_URL="https://github.com/${REPO}/releases/download/${VERSION}/${BINARY_FILE}"
+    ARTIFACT="${BINARY_NAME}-${PLATFORM}.tar.gz"
+    DOWNLOAD_URL="https://github.com/${REPO}/releases/download/${VERSION}/${ARTIFACT}"
     CHECKSUM_URL="${DOWNLOAD_URL}.sha256"
     TMP_DIR="$(mktemp -d)"
 
     trap 'rm -rf "$TMP_DIR"' EXIT
 
     printf "  Downloading sesame %b%s%b... " "$BOLD" "$VERSION" "$RESET"
-    if ! curl -fsSL -o "${TMP_DIR}/${BINARY_FILE}" "$DOWNLOAD_URL"; then
+    if ! curl -fsSL -o "${TMP_DIR}/${ARTIFACT}" "$DOWNLOAD_URL"; then
         printf "\n"
         die "Download failed. Check that version ${VERSION} exists at:"
         die "  https://github.com/${REPO}/releases/tag/${VERSION}"
@@ -196,12 +198,12 @@ download_binary() {
     printf "done\n"
 
     printf "  Verifying checksum... "
-    if curl -fsSL -o "${TMP_DIR}/${BINARY_FILE}.sha256" "$CHECKSUM_URL" 2>/dev/null; then
-        EXPECTED="$(awk '{print $1}' "${TMP_DIR}/${BINARY_FILE}.sha256")"
+    if curl -fsSL -o "${TMP_DIR}/${ARTIFACT}.sha256" "$CHECKSUM_URL" 2>/dev/null; then
+        EXPECTED="$(awk '{print $1}' "${TMP_DIR}/${ARTIFACT}.sha256")"
         if command -v sha256sum >/dev/null 2>&1; then
-            ACTUAL="$(sha256sum "${TMP_DIR}/${BINARY_FILE}" | awk '{print $1}')"
+            ACTUAL="$(sha256sum "${TMP_DIR}/${ARTIFACT}" | awk '{print $1}')"
         else
-            ACTUAL="$(shasum -a 256 "${TMP_DIR}/${BINARY_FILE}" | awk '{print $1}')"
+            ACTUAL="$(shasum -a 256 "${TMP_DIR}/${ARTIFACT}" | awk '{print $1}')"
         fi
 
         if [ "$EXPECTED" != "$ACTUAL" ]; then
@@ -214,8 +216,16 @@ download_binary() {
         warn "skipped (no checksum file found)"
     fi
 
-    chmod +x "${TMP_DIR}/${BINARY_FILE}"
-    mv "${TMP_DIR}/${BINARY_FILE}" "${PREFIX}/${BINARY_NAME}"
+    # Unpack the app once, here, into a lib dir next to the bin prefix, then
+    # symlink the launcher onto PATH. The bundle is already extracted, so
+    # running `sesame` no longer unpacks 37 MB to /tmp on every invocation.
+    LIBDIR="$(dirname "$PREFIX")/lib/sesame"
+    tar -xzf "${TMP_DIR}/${ARTIFACT}" -C "$TMP_DIR"
+    rm -rf "$LIBDIR"
+    mkdir -p "$(dirname "$LIBDIR")"
+    mv "${TMP_DIR}/${BINARY_NAME}" "$LIBDIR"
+    chmod +x "${LIBDIR}/${BINARY_NAME}"
+    ln -sf "${LIBDIR}/${BINARY_NAME}" "${PREFIX}/${BINARY_NAME}"
 }
 
 # --- Skill install ---
