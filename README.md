@@ -92,7 +92,7 @@ Walks you through agent selection interactively. Add `--global` to install to th
      ├─────────────────────────►│  ┌── 1. verify JWT sig (EdDSA) │
      │                          │  ├── 2. check agent is active  │
      │                          │  ├── 3. look up policy         │
-     │                          │  ├── 4. Telegram-approve       │
+     │                          │  ├── 4. human approval         │
      │                          │  │      (first time per host)  │
      │                          │  └── 5. inject Auth header     │
      │                          │                                │
